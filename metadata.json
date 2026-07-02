@@ -1,0 +1,6 @@
+{
+  "name": "Modern Birthday Website",
+  "description": "A premium, dreamy, and elegant birthday celebration experience styled with soft pastel palettes and smooth magical transitions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
