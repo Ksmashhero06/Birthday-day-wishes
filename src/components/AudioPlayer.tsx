@@ -11,65 +11,112 @@ export const AudioPlayer: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [showNotification, setShowNotification] = useState(true);
+  const [showBlockedButton, setShowBlockedButton] = useState(false);
+  const [hasPlayedOnce, setHasPlayedOnce] = useState(false);
+  const [isUserPaused, setIsUserPaused] = useState(false);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const fadeInterval = useRef<NodeJS.Timeout | null>(null);
 
   // Royal-free, dreamy emotional background music (soft piano/orchestral track)
   const musicUrl = 'https://assets.mixkit.co/music/preview/mixkit-dreaming-big-1111.mp3';
 
+  // Keep refs of key state to avoid stale closure issues in global event handlers
+  const isPlayingRef = useRef(isPlaying);
+  const isMutedRef = useRef(isMuted);
+  const isUserPausedRef = useRef(isUserPaused);
+  const hasPlayedOnceRef = useRef(hasPlayedOnce);
+
   useEffect(() => {
-    // Setup audio object
-    audioRef.current = new Audio(musicUrl);
-    audioRef.current.loop = true;
-    audioRef.current.volume = 0.25; // Gentle low volume
-    audioRef.current.muted = false;
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
 
-    // Listen to custom event to start music from any user gesture
-    const handleGlobalPlay = () => {
-      if (audioRef.current) {
-        audioRef.current.play()
-          .then(() => {
-            setIsPlaying(true);
-            setShowNotification(false);
-          })
-          .catch((err) => {
-            console.log('Playback blocked by browser policy. Waiting for gesture.', err);
-          });
+  useEffect(() => {
+    isMutedRef.current = isMuted;
+  }, [isMuted]);
+
+  useEffect(() => {
+    isUserPausedRef.current = isUserPaused;
+  }, [isUserPaused]);
+
+  useEffect(() => {
+    hasPlayedOnceRef.current = hasPlayedOnce;
+  }, [hasPlayedOnce]);
+
+  // Handle fading volume over a duration
+  const fadeTo = (targetVolume: number, durationMs: number, onComplete?: () => void) => {
+    if (fadeInterval.current) {
+      clearInterval(fadeInterval.current);
+    }
+    if (!audioRef.current) return;
+
+    const startVolume = audioRef.current.volume;
+    const stepTime = 30; // ~33fps updates for super smooth gradients
+    const steps = durationMs / stepTime;
+    const volumeStep = (targetVolume - startVolume) / steps;
+    let currentStep = 0;
+
+    fadeInterval.current = setInterval(() => {
+      if (!audioRef.current) {
+        if (fadeInterval.current) clearInterval(fadeInterval.current);
+        return;
       }
-    };
 
-    window.addEventListener('play-birthday-music', handleGlobalPlay);
+      currentStep++;
+      let nextVolume = startVolume + volumeStep * currentStep;
 
-    // Auto-dismiss the friendly tip after 7 seconds
-    const timer = setTimeout(() => {
-      setShowNotification(false);
-    }, 7000);
-
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
+      // Handle float boundary limits
+      if (volumeStep > 0 && nextVolume >= targetVolume) {
+        nextVolume = targetVolume;
+      } else if (volumeStep < 0 && nextVolume <= targetVolume) {
+        nextVolume = targetVolume;
       }
-      window.removeEventListener('play-birthday-music', handleGlobalPlay);
-      clearTimeout(timer);
-    };
-  }, []);
+
+      audioRef.current.volume = Math.max(0, Math.min(1, nextVolume));
+
+      if (currentStep >= steps || nextVolume === targetVolume) {
+        if (fadeInterval.current) clearInterval(fadeInterval.current);
+        fadeInterval.current = null;
+        if (onComplete) onComplete();
+      }
+    }, stepTime);
+  };
 
   const playMusic = () => {
-    if (!audioRef.current) return;
+    if (!audioRef.current) {
+      audioRef.current = new Audio(musicUrl);
+      audioRef.current.loop = true;
+      audioRef.current.volume = 0;
+    }
+
+    audioRef.current.muted = isMutedRef.current;
+    setIsUserPaused(false);
+
+    // Fade in over 1 second when starting
     audioRef.current.play()
       .then(() => {
         setIsPlaying(true);
+        setHasPlayedOnce(true);
+        setShowBlockedButton(false);
         setShowNotification(false);
+        fadeTo(0.25, 1000);
       })
       .catch((err) => {
-        console.log('Playback blocked by browser policy. Waiting for gesture.', err);
+        console.log('Playback blocked by browser policy. Prompting with tap to play button.', err);
+        setShowBlockedButton(true);
       });
   };
 
   const pauseMusic = () => {
     if (!audioRef.current) return;
-    audioRef.current.pause();
+    setIsUserPaused(true);
     setIsPlaying(false);
+    // Fade out over 1 second when pausing, then pause the element
+    fadeTo(0, 1000, () => {
+      if (audioRef.current && !isPlayingRef.current) {
+        audioRef.current.pause();
+      }
+    });
   };
 
   const toggleMute = () => {
@@ -79,11 +126,77 @@ export const AudioPlayer: React.FC = () => {
     setIsMuted(nextMuted);
   };
 
+  useEffect(() => {
+    // Lazy setup audio element
+    audioRef.current = new Audio(musicUrl);
+    audioRef.current.loop = true;
+    audioRef.current.volume = 0;
+    audioRef.current.muted = false;
+
+    // Listen to custom play trigger from interactive buttons
+    const handleGlobalPlay = () => {
+      if (!isUserPausedRef.current && !isPlayingRef.current) {
+        playMusic();
+      }
+    };
+
+    // Auto-detect first user interaction on mobile to unlock and start audio gracefully
+    const handleFirstInteraction = () => {
+      if (!hasPlayedOnceRef.current && !isPlayingRef.current && !isUserPausedRef.current) {
+        playMusic();
+      }
+      // Clean up interaction triggers once handled
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
+    };
+
+    window.addEventListener('play-birthday-music', handleGlobalPlay);
+    window.addEventListener('click', handleFirstInteraction);
+    window.addEventListener('touchstart', handleFirstInteraction);
+
+    // Auto-dismiss the gentle tip after 10 seconds
+    const timer = setTimeout(() => {
+      setShowNotification(false);
+    }, 10000);
+
+    return () => {
+      if (fadeInterval.current) {
+        clearInterval(fadeInterval.current);
+      }
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      window.removeEventListener('play-birthday-music', handleGlobalPlay);
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
+      clearTimeout(timer);
+    };
+  }, []);
+
   return (
     <div className="fixed bottom-24 right-6 md:bottom-8 md:right-8 z-50 flex flex-col items-end gap-2">
+      {/* Blocked or Pending User Interaction Fallback Floating Button */}
+      <AnimatePresence>
+        {showBlockedButton && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 15 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={playMusic}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-pastel-rose to-pastel-rose-deep text-white border-2 border-white/40 shadow-lg text-[11px] font-sans font-bold tracking-wider cursor-pointer hover:shadow-xl transition-all"
+          >
+            <Music size={13} className="animate-pulse text-white" />
+            <span>🎵 Tap to Play Music</span>
+          </motion.button>
+        )}
+      </AnimatePresence>
+
       {/* Soft, magical reminder popup asking the user to activate music */}
       <AnimatePresence>
-        {showNotification && (
+        {showNotification && !showBlockedButton && !isPlaying && (
           <motion.div
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
