@@ -183,6 +183,7 @@ export const CanvasPage: React.FC<CanvasPageProps> = ({ onNext, onBack }) => {
 
   // Event handlers
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    window.dispatchEvent(new CustomEvent('play-birthday-music'));
     setIsDrawing(true);
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -202,6 +203,7 @@ export const CanvasPage: React.FC<CanvasPageProps> = ({ onNext, onBack }) => {
 
   // Touch support for gorgeous painting on mobile devices
   const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    window.dispatchEvent(new CustomEvent('play-birthday-music'));
     setIsDrawing(true);
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect || e.touches.length === 0) return;

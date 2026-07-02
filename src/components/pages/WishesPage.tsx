@@ -66,6 +66,123 @@ export const WishesPage: React.FC<WishesPageProps> = ({ onNext, onBack }) => {
 
   const selectedLetter = LETTERS.find(l => l.id === activeLetterId);
 
+  // Send Love Animation & Interactive States
+  const [isLoveSending, setIsLoveSending] = useState(false);
+  const [isGlowing, setIsGlowing] = useState(false);
+  const [loveMessage, setLoveMessage] = useState<string | null>(null);
+  const [floatingHearts, setFloatingHearts] = useState<{
+    id: string;
+    size: number;
+    color: string;
+    angle: number;
+    distance: number;
+    delay: number;
+    duration: number;
+    swayDistance: number;
+  }[]>([]);
+  const [goldenSparkles, setGoldenSparkles] = useState<{
+    id: string;
+    size: number;
+    angle: number;
+    distance: number;
+    delay: number;
+    duration: number;
+  }[]>([]);
+
+  // Web Audio Synth for a soft, magical sparkle sound
+  const playSparkleSound = () => {
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const now = ctx.currentTime;
+      // Beautiful major pentatonic chime sequence
+      const notes = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50]; // C5, D5, E5, G5, A5, C6
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+        
+        gain.gain.setValueAtTime(0.04, now + idx * 0.06);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.06 + 0.25);
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.06);
+        osc.stop(now + idx * 0.06 + 0.25);
+      });
+    } catch (e) {
+      console.warn("AudioContext failed or blocked: ", e);
+    }
+  };
+
+  const handleSendLove = () => {
+    window.dispatchEvent(new CustomEvent('play-birthday-music'));
+    if (isLoveSending) return;
+
+    setIsLoveSending(true);
+    setIsGlowing(true);
+    setLoveMessage("💖 Love Sent!");
+
+    playSparkleSound();
+
+    // Trigger local love heartbeat custom event
+    const event = new CustomEvent('heart-burst', { 
+      detail: { x: window.innerWidth / 2, y: window.innerHeight / 2 } 
+    });
+    window.dispatchEvent(event);
+
+    // Generate 22 to 28 floating hearts
+    const heartsCount = 22 + Math.floor(Math.random() * 7);
+    const pinkShades = ['#f43f5e', '#ec4899', '#f472b6', '#fda4af', '#fca5b3', '#db2777', '#ff6b8b'];
+    const newHearts = Array.from({ length: heartsCount }).map((_, i) => {
+      const angle = -145 + Math.random() * 110; // Upward-pointing cone spread (-145 to -35 deg)
+      return {
+        id: `love-heart-${i}-${Date.now()}`,
+        size: 10 + Math.random() * 14, // sizes 10px to 24px
+        color: pinkShades[i % pinkShades.length],
+        angle: angle,
+        distance: 140 + Math.random() * 140, // 140px to 280px float distance
+        delay: Math.random() * 0.25,
+        duration: 2.0 + Math.random() * 0.8, // 2s to 2.8s float duration
+        swayDistance: 12 + Math.random() * 16, // sway amount left/right
+      };
+    });
+    setFloatingHearts(newHearts);
+
+    // Generate 12 to 16 golden sparkles
+    const sparklesCount = 12 + Math.floor(Math.random() * 5);
+    const newSparkles = Array.from({ length: sparklesCount }).map((_, i) => {
+      const angle = Math.random() * 360;
+      return {
+        id: `love-sparkle-${i}-${Date.now()}`,
+        size: 6 + Math.random() * 8,
+        angle: angle,
+        distance: 30 + Math.random() * 50,
+        delay: Math.random() * 0.12,
+        duration: 0.5 + Math.random() * 0.6,
+      };
+    });
+    setGoldenSparkles(newSparkles);
+
+    // Timeline for animation sequence
+    setTimeout(() => {
+      setIsGlowing(false);
+    }, 1000);
+
+    setTimeout(() => {
+      setLoveMessage("💕 Another smile has been delivered.");
+    }, 800);
+
+    setTimeout(() => {
+      setIsLoveSending(false);
+      setLoveMessage(null);
+      setFloatingHearts([]);
+      setGoldenSparkles([]);
+    }, 2200);
+  };
+
   return (
     <div className="flex flex-col items-center justify-between min-h-[58vh] sm:min-h-[72vh] text-center py-4 sm:py-6 px-2 sm:px-4 md:px-8 w-full max-w-xl mx-auto overflow-hidden relative select-none">
       
@@ -95,7 +212,10 @@ export const WishesPage: React.FC<WishesPageProps> = ({ onNext, onBack }) => {
         {LETTERS.map((letter, idx) => (
           <motion.div
             key={letter.id}
-            onClick={() => setActiveLetterId(letter.id)}
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent('play-birthday-music'));
+              setActiveLetterId(letter.id);
+            }}
             whileHover={{ y: -6, scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             initial={{ opacity: 0, y: 20 }}
@@ -146,10 +266,17 @@ export const WishesPage: React.FC<WishesPageProps> = ({ onNext, onBack }) => {
           >
             <motion.div
               initial={{ scale: 0.9, y: 20, rotate: -1 }}
-              animate={{ scale: 1, y: 0, rotate: 0 }}
+              animate={{ 
+                scale: 1, 
+                y: 0, 
+                rotate: 0,
+                boxShadow: isGlowing 
+                  ? "0 20px 40px rgba(0,0,0,0.1), 0 0 35px rgba(243, 163, 178, 0.75)" 
+                  : "0 25px 50px -12px rgba(0,0,0,0.25)"
+              }}
               exit={{ scale: 0.9, y: 20, rotate: 1 }}
               transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-              className={`w-full max-w-md rounded-[32px] glass-panel bg-gradient-to-b ${selectedLetter.bgGrad} border border-white/80 shadow-2xl overflow-hidden p-6 md:p-8 relative text-left`}
+              className={`w-full max-w-md rounded-[32px] glass-panel bg-gradient-to-b ${selectedLetter.bgGrad} border border-white/80 overflow-hidden p-6 md:p-8 relative text-left`}
               style={{ backdropFilter: 'blur(16px)' }}
             >
               {/* Magical Sparkles behind */}
@@ -182,7 +309,7 @@ export const WishesPage: React.FC<WishesPageProps> = ({ onNext, onBack }) => {
 
               {/* Letter Content in gorgeous handwritten font look with solid high contrast background */}
               <div 
-                className="font-serif text-[16px] sm:text-[18px] text-[#333333] bg-white/92 p-4 sm:p-6 rounded-2xl border border-white/70 italic shadow-inner max-h-[170px] sm:max-h-[250px] overflow-y-auto"
+                className="font-serif text-[16px] sm:text-[18px] text-[#333333] bg-white/92 p-4 sm:p-6 rounded-2xl border border-white/70 italic shadow-inner"
                 style={{ textShadow: '0.5px 0.5px 1px rgba(0, 0, 0, 0.05)', lineHeight: '1.8' }}
               >
                 "{selectedLetter.content}"
@@ -198,19 +325,131 @@ export const WishesPage: React.FC<WishesPageProps> = ({ onNext, onBack }) => {
                     {selectedLetter.sender}
                   </span>
                 </div>
-                <motion.button
-                  whileHover={{ scale: 1.08 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    // Cute love heartbeat effect
-                    const event = new CustomEvent('heart-burst', { detail: { x: window.innerWidth / 2, y: window.innerHeight / 2 } });
-                    window.dispatchEvent(event);
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pastel-rose text-white text-[10px] font-sans font-bold tracking-wider uppercase shadow-xs hover:shadow-md cursor-pointer"
-                >
-                  <Heart size={10} className="fill-current" />
-                  <span>Send Love</span>
-                </motion.button>
+                <div className="relative">
+                  {/* Container for particles so they float above/around the button */}
+                  <div className="absolute inset-0 pointer-events-none z-30 overflow-visible">
+                    <AnimatePresence>
+                      {floatingHearts.map((heart) => {
+                        const radian = (heart.angle * Math.PI) / 180;
+                        const targetX = Math.cos(radian) * heart.distance;
+                        const targetY = Math.sin(radian) * heart.distance;
+                        const sway1 = heart.swayDistance * 0.6;
+                        const sway2 = -heart.swayDistance * 0.9;
+                        const sway3 = heart.swayDistance * 0.4;
+                        
+                        return (
+                          <motion.div
+                            key={heart.id}
+                            initial={{ x: 0, y: 0, opacity: 0, scale: 0 }}
+                            animate={{
+                              x: [0, targetX * 0.3 + sway1, targetX * 0.7 + sway2, targetX + sway3],
+                              y: [0, targetY * 0.4, targetY * 0.8, targetY],
+                              opacity: [0, 1, 0.95, 0],
+                              scale: [0, 1.4, 1.1, 0],
+                            }}
+                            exit={{ opacity: 0 }}
+                            transition={{
+                              duration: heart.duration,
+                              delay: heart.delay,
+                              ease: "easeOut",
+                            }}
+                            className="absolute"
+                            style={{
+                              left: "50%",
+                              top: "50%",
+                              width: heart.size,
+                              height: heart.size,
+                              marginLeft: -heart.size / 2,
+                              marginTop: -heart.size / 2,
+                              color: heart.color,
+                            }}
+                          >
+                            <Heart size={heart.size} className="fill-current" />
+                          </motion.div>
+                        );
+                      })}
+
+                      {goldenSparkles.map((sparkle) => {
+                        const radian = (sparkle.angle * Math.PI) / 180;
+                        const targetX = Math.cos(radian) * sparkle.distance;
+                        const targetY = Math.sin(radian) * sparkle.distance;
+
+                        return (
+                          <motion.div
+                            key={sparkle.id}
+                            initial={{ x: 0, y: 0, opacity: 0, scale: 0 }}
+                            animate={{
+                              x: [0, targetX],
+                              y: [0, targetY],
+                              opacity: [0, 1, 1, 0],
+                              scale: [0, 1.2, 0],
+                            }}
+                            exit={{ opacity: 0 }}
+                            transition={{
+                              duration: sparkle.duration,
+                              delay: sparkle.delay,
+                              ease: "easeOut",
+                            }}
+                            className="absolute text-gold-accent"
+                            style={{
+                              left: "50%",
+                              top: "50%",
+                              width: sparkle.size,
+                              height: sparkle.size,
+                              marginLeft: -sparkle.size / 2,
+                              marginTop: -sparkle.size / 2,
+                            }}
+                          >
+                            <Sparkles size={sparkle.size} />
+                          </motion.div>
+                        );
+                      })}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Floating Message Bubble */}
+                  <AnimatePresence>
+                    {loveMessage && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.85 }}
+                        animate={{ opacity: 1, y: -34, scale: 1 }}
+                        exit={{ opacity: 0, y: -50, scale: 0.85 }}
+                        transition={{ duration: 0.35, ease: "easeOut" }}
+                        className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-white/95 border border-pastel-rose/30 shadow-lg rounded-xl py-1.5 px-3.5 whitespace-nowrap text-[11px] font-sans font-bold text-pastel-rose-deep flex items-center justify-center z-40"
+                        style={{ filter: "drop-shadow(0 4px 6px rgba(243, 163, 178, 0.15))" }}
+                      >
+                        <span className="relative z-10">{loveMessage}</span>
+                        {/* Little Bubble Caret */}
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-0.5 border-4 border-transparent border-t-white/95" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <motion.button
+                    whileHover={isLoveSending ? {} : { scale: 1.08 }}
+                    whileTap={isLoveSending ? {} : { scale: 0.95 }}
+                    disabled={isLoveSending}
+                    onClick={handleSendLove}
+                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-pastel-rose text-white text-[10px] font-sans font-bold tracking-wider uppercase shadow-xs hover:shadow-md cursor-pointer transition-all duration-300 select-none ${
+                      isLoveSending ? 'opacity-70 cursor-not-allowed scale-[0.98]' : ''
+                    }`}
+                  >
+                    <motion.span
+                      animate={isLoveSending ? {
+                        scale: [1, 1.35, 1, 1.35, 1],
+                      } : {}}
+                      transition={isLoveSending ? {
+                        repeat: Infinity,
+                        duration: 0.75,
+                        ease: "easeInOut"
+                      } : {}}
+                      className="inline-block"
+                    >
+                      <Heart size={10} className="fill-current" />
+                    </motion.span>
+                    <span>Send Love</span>
+                  </motion.button>
+                </div>
               </div>
             </motion.div>
           </motion.div>

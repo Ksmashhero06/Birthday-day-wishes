@@ -40,6 +40,7 @@ export const CelebrationPage: React.FC<CelebrationPageProps> = ({ onReset, onBac
   }, [showWishSuccessModal, countdown]);
 
   const handleBlowCandle = () => {
+    window.dispatchEvent(new CustomEvent('play-birthday-music'));
     if (isBlownOut) return;
     // Do not immediately trigger candle blowout animation, open the wish-making modal instead!
     setShowMakeWishModal(true);

@@ -612,16 +612,33 @@ export const JourneyPage: React.FC<JourneyPageProps> = ({ onNext, onBack }) => {
         transition={{ duration: 1 }}
         className="z-10 mt-1 w-full text-center"
       >
-        <h2 className="responsive-title text-pastel-rose-deep font-bold tracking-wide flex items-center justify-center gap-1.5 text-glow">
-          <span>Happy Birthday Sister</span>
-          <motion.span
-            animate={{ scale: [1, 1.2, 1] }}
+        {/* Mobile Header Structure */}
+        <div className="block sm:hidden">
+          <motion.div
+            animate={{ scale: [1, 1.25, 1] }}
             transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
-            className="inline-block"
+            className="text-2xl mb-1.5 inline-block"
           >
             ❤️
-          </motion.span>
-        </h2>
+          </motion.div>
+          <h2 className="responsive-title text-pastel-rose-deep font-bold tracking-wide text-glow leading-tight mb-3">
+            Happy Birthday<br />Sister
+          </h2>
+        </div>
+
+        {/* Desktop Header Structure */}
+        <div className="hidden sm:block">
+          <h2 className="responsive-title text-pastel-rose-deep font-bold tracking-wide flex items-center justify-center gap-1.5 text-glow">
+            <span>Happy Birthday Sister</span>
+            <motion.span
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+              className="inline-block"
+            >
+              ❤️
+            </motion.span>
+          </h2>
+        </div>
       </motion.div>
 
       {/* 3. Easy-to-edit Metadata Board (Name & Date of Birth) */}
@@ -629,22 +646,22 @@ export const JourneyPage: React.FC<JourneyPageProps> = ({ onNext, onBack }) => {
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.2, duration: 1 }}
-        className="z-10 grid grid-cols-2 gap-3 w-full max-w-sm my-4"
+        className="z-10 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full sm:max-w-sm my-4"
       >
-        <div className="glass-panel px-4 py-2.5 rounded-2xl border border-white/60 shadow-xs flex flex-col items-center justify-center">
+        <div className="glass-panel px-4 py-2.5 rounded-2xl border border-white/60 shadow-xs flex flex-col items-center justify-center w-full">
           <span className="text-[10px] font-sans font-semibold tracking-wider text-pastel-rose-deep/50 uppercase mb-0.5">
             Name
           </span>
-          <span className="font-serif text-sm md:text-base font-bold text-pastel-rose-deep tracking-wide">
+          <span className="font-serif text-sm md:text-base font-bold text-pastel-rose-deep tracking-wide text-center">
             {BIRTHDAY_GIRL_NAME}
           </span>
         </div>
 
-        <div className="glass-panel px-4 py-2.5 rounded-2xl border border-white/60 shadow-xs flex flex-col items-center justify-center">
+        <div className="glass-panel px-4 py-2.5 rounded-2xl border border-white/60 shadow-xs flex flex-col items-center justify-center w-full">
           <span className="text-[10px] font-sans font-semibold tracking-wider text-pastel-rose-deep/50 uppercase mb-0.5">
             Date of Birth
           </span>
-          <span className="font-serif text-sm md:text-base font-bold text-pastel-rose-deep tracking-wide">
+          <span className="font-serif text-sm md:text-base font-bold text-pastel-rose-deep tracking-wide text-center">
             {BIRTHDAY_DATE}
           </span>
         </div>

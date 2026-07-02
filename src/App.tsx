@@ -66,7 +66,7 @@ export default function App() {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex flex-col justify-between overflow-x-hidden selection:bg-pastel-rose-light selection:text-pastel-rose-deep">
+    <div className="relative min-h-screen w-full flex flex-col justify-between overflow-x-hidden selection:bg-pastel-rose-light selection:text-pastel-rose-deep" style={{ paddingBottom: 'max(140px, env(safe-area-inset-bottom))' }}>
       {/* 1. Global Interactive Ambient Background */}
       <BackgroundEffects />
 
@@ -84,11 +84,11 @@ export default function App() {
       </header>
 
       {/* 3. Main Stage with glassmorphism for a modern premium feel */}
-      <main className="w-[94%] sm:w-[85%] md:w-[80%] lg:w-full max-w-2xl mx-auto px-2 py-2 md:py-8 lg:py-16 flex-1 flex flex-col justify-center relative z-20 overflow-hidden">
-        <div className="w-full py-5 px-3.5 sm:p-8 md:p-12 rounded-[28px] md:rounded-[40px] bg-white/35 backdrop-blur-md border border-white/50 shadow-xl shadow-pastel-rose-deep/[0.02] flex flex-col items-center justify-center min-h-[380px] sm:min-h-[500px] max-h-[75vh] md:max-h-none overflow-y-auto overflow-x-hidden">
+      <main className="w-full max-w-2xl mx-auto px-4 py-5 md:py-8 lg:py-16 flex-1 flex flex-col justify-center relative z-20">
+        <div className="w-full py-5 px-3.5 sm:p-8 md:p-12 rounded-[28px] md:rounded-[40px] bg-white/35 backdrop-blur-md border border-white/50 shadow-xl shadow-pastel-rose-deep/[0.02] flex flex-col items-center justify-center min-h-[380px] sm:min-h-[500px]">
           <AnimatePresence mode="wait">
             <PageTransition key={currentPage}>
-              <div className="w-full flex flex-col items-center justify-center overflow-x-hidden py-1">
+              <div className="w-full flex flex-col items-center justify-center py-1">
                 {renderActivePage()}
               </div>
             </PageTransition>

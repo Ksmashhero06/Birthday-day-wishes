@@ -637,7 +637,10 @@ export const WelcomePage: React.FC<WelcomePageProps> = ({ onNext }) => {
         <Button
           variant="primary"
           size="lg"
-          onClick={onNext}
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent('play-birthday-music'));
+            onNext();
+          }}
           className="gap-2.5 px-9 py-4 font-serif text-base tracking-wider rounded-full shadow-[0_0_22px_rgba(243,163,178,0.45)] hover:shadow-[0_0_32px_rgba(243,163,178,0.7)] transition-all duration-300 border-2 border-white/40"
         >
           <span>🎁</span>

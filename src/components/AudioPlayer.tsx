@@ -23,6 +23,22 @@ export const AudioPlayer: React.FC = () => {
     audioRef.current.volume = 0.25; // Gentle low volume
     audioRef.current.muted = false;
 
+    // Listen to custom event to start music from any user gesture
+    const handleGlobalPlay = () => {
+      if (audioRef.current) {
+        audioRef.current.play()
+          .then(() => {
+            setIsPlaying(true);
+            setShowNotification(false);
+          })
+          .catch((err) => {
+            console.log('Playback blocked by browser policy. Waiting for gesture.', err);
+          });
+      }
+    };
+
+    window.addEventListener('play-birthday-music', handleGlobalPlay);
+
     // Auto-dismiss the friendly tip after 7 seconds
     const timer = setTimeout(() => {
       setShowNotification(false);
@@ -33,6 +49,7 @@ export const AudioPlayer: React.FC = () => {
         audioRef.current.pause();
         audioRef.current = null;
       }
+      window.removeEventListener('play-birthday-music', handleGlobalPlay);
       clearTimeout(timer);
     };
   }, []);
