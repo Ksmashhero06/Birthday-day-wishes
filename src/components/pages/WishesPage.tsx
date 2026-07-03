@@ -299,7 +299,7 @@ export const WishesPage: React.FC<WishesPageProps> = ({ onNext, onBack }) => {
                 </div>
                 <div>
                   <span className="text-[10px] font-sans text-pastel-rose-deep/60 tracking-widest uppercase font-bold">
-                    Elena's Birthday Wish
+                    Deva's Birthday Wish
                   </span>
                   <h3 className="font-serif text-lg md:text-xl font-bold text-pastel-rose-deep tracking-wide">
                     {selectedLetter.title}
