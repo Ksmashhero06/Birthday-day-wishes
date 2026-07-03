@@ -300,7 +300,7 @@ export const CanvasPage: React.FC<CanvasPageProps> = ({ onNext, onBack }) => {
           <span>Back</span>
         </Button>
         <Button variant="primary" size="md" onClick={onNext} className="gap-1.5 w-full sm:flex-1">
-          <span>Celebrate Elena</span>
+          <span>Celebrate Deva</span>
           <ChevronRight size={16} />
         </Button>
       </div>
